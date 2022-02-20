@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Real-time Chat!</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<script src="meter.js"></script>
+</head>
+
+<style>
+body {
+	background: #1f2e3c;
+	color: white;
+}
+
+#zone_chat strong {
+	color: white;
+	background-color: black;
+	padding: 2px;
+}
+
+section#chat_zone {
+	height: 250px;
+	width: auto;
+	overflow: auto;
+}
+
+section#chat_zone>p {
+	background: lightgray;
+	margin: 5px 0;
+	padding: 5px;
+	border-radius: 3px;
+	word-break: break-all;
+	color: black;
+}
+
+form#chat_form {
+	margin-top: 32px;
+}
+
+.list-group-item {
+	position: relative;
+	display: block;
+	padding: .75rem 1.25rem;
+	margin-bottom: -1px;
+	background-color: #d3d3d3;
+	border: 1px solid rgba(0, 0, 0, .125);
+	color: black;
+}
+
+.div-style {
+	border: 3px solid white;
+	border-radius: 5px;
+	padding: 5px;
+	margin: 5px;
+	width: 999px;
+}
+
+.comment-box {
+	margin: -5px;
+	background: lightgrey;
+	padding: 3px;
+	text-align: center;
+}
+
+.footer {
+	position: fixed;
+	left: 0;
+	bottom: 0;
+	height: auto;
+	width: 100%;
+}
+
+.video {
+	display: inline-flex;
+}
+
+meter#instant {
+	color: #0f9d58;
+}
+
+.slider {
+	-webkit-appearance: none;
+	width: 250px;
+	height: 15px;
+	border-radius: 5px;
+	background: #d3d3d3;
+	outline: none;
+	opacity: 0.7;
+	-webkit-transition: .2s;
+	transition: opacity .2s;
+}
+
+.slider::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: #50B9FF;
+	cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: #50B9FF;
+	cursor: pointer;
+}
+
+.icon-bar {
+	width: 100%;
+	background-color: white;
+	overflow: auto;
+}
+
+.icon-bar a {
+	float: left;
+	width: 20%;
+	text-align: center;
+	padding: 12px 0;
+	transition: all 0.3s ease;
+	color: #0a3d62;
+	font-size: 36px;
+}
+
+.icon-bar a:hover {
+	background-color: #000;
+	color: white;
+}
+
+.row {
+	margin-right: 0;
+	margin-left: 0;
+}
+</style>
+
+
+<body>
+	<div class="container-fluid row">
+		<div class="users div-style" style="width: 23.3%;">
+			<div class="well">
+				<center><h3>Online Users</h3></center>
+				<ul class="list-group" id="users"></ul>
+			</div>
+		</div>
+		<div class="div-style" style="width: 50%;">
+			<div class="video">
+				<video id="localVideo" width="50%" height="auto" autoplay muted> </video>
+				<video id='remoteVideo' width="50%" height="auto" autoplay> </video>
+			</div>
+			<button type="submit" class="btn btn-light" id="callButton" style="width: 100%;">Call</button>
+		</div>
+		
+		<div class="div-style" style="width: 25%; color: white;">
+			<table border="0" cellpadding="0" class="container">
+				<tbody>
+					<tr>
+						<td>			
+							<div class="label">Microphone Peak Meter: 
+								<div id="mic-peak-meter" style="width: 100%; height: 5em; margin: 1em 0;"></div>	
+							</div>
+							Microphone Gain: 	<input id="volume" class="slider" type="range" min="0.0" max="2.0" step="0.1" value="1.0">
+							<br> Value:	<span id="mic-value">1.0</span>
+						</td>
+					</tr>
+					<tr>
+						<td>			
+							<div class="label">Sound Peak Meter: 
+								<div id="sound-peak-meter" style="width: 100%; height: 5em; margin: 1em 0;"></div>	
+							</div>
+							Sound Volume: 	<input id="speaker-volume" class="slider" type="range" min="0.0" max="1.0" step="0.1" value="1.0">
+							<Br> Value: 	<span id="speaker-value">1.0</span>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		
+		<div class="chat div-style" id="chat" style="width: 100%;">
+			<section class="chat_zone" id="chat_zone"></section>
+			<form class="comment-box"  action="/" id="chat_form" method="post" name="chat_form">
+			<input autofocus="" id="message" name="message" placeholder="Your message..." size="50" type="text"> 
+			<input class="btn btn-light" id="send_message" type="submit" value="Send">
+			</form>
+		</div>
+	</div>
+	<center><h1 style="color: white;">Real-time Chat!</h1></center>
+	<div class="footer">
+		<div class="icon-bar">
+		  <a href="#" onclick="muteMic(this)" id="muteMicButton"><i class="fa fa-microphone"></i></a> 
+		  <a href="#" onclick="muteSound(this)" id="muteSoundButton"><i class="fa fa-volume-up"></i></a> 
+		  <a href="#" id="hideShowChat"><i class="fa fa-comments"></i></a> 
+		  <a href="#" id="infoButton"><i class="fa fa-info-circle"></i></a> 
+		  <a href="javascript:window.open('','_self').close();"><i class="fa  fa-sign-out" style="color: red;"></i></a> 
+		</div>
+	</div>
+
+	<script src="/socket.io/socket.io.js"></script> 
+	<script>
+		"use strict";
+
+		// Connecting to socket.io
+		var socket = io.connect("http://localhost:8080");
+
+		// The username is requested, sent to the server and displayed in the title
+		var username = prompt("What's your username?", "user");
+		socket.emit("new_client", username);
+		document.title = username + " - " + document.title;
+
+		// When a message is received it's inserted in the page
+		socket.on("message", function (data) {
+			insertMessage(data.username, data.message);
+		});
+
+		// When a new client connects, the information is displayed
+		socket.on("new_client", function (username) {
+			$("#chat_zone").prepend("<p><em>" + username + " has joined the chat!</em></p>");
+		});
+
+		// When a new client disconnects, the information is displayed
+		socket.on("user_left", function (username) {
+			$("#chat_zone").prepend("<p><em>" + username + " has left the chat!</em></p>");
+		});
+
+		// When the form is sent, the message is sent and displayed on the page
+		$("#chat_form").submit(function () {
+			var message = $("#message").val();
+			socket.emit("message", message); // Sends the message to the others
+			insertMessage(username, message); // Also displays the message on our page
+			$("#message").val("").focus(); // Empties the chat form and puts the focus back on it
+
+			return false; // Blocks 'classic' sending of the form
+		});
+
+		// Adds a message to the page
+		function insertMessage(username, message) {
+			$("#chat_zone").prepend("<p><strong>" + username + "</strong>: " + message + "</p>");
+		}
+
+		// Updates user list
+		socket.on("get_users", function (users) {
+			console.log("Online users: " + users);
+			$("#users").empty();
+			for (var i = 0; i < users.length; i++) {
+				$("#users").prepend('<li class="list-group-item">' + users[i] + "</li>");
+			}
+		});
+
+		/*********************** video call ***************************/
+		var localStream;
+
+		var localVideo = document.getElementById("localVideo");
+		var remoteVideo = document.getElementById("remoteVideo");
+		var callButton = document.getElementById("callButton");
+
+		var inputLevelSelector = document.getElementById('volume');
+		var outputLevelSelector = document.getElementById("speaker-volume");
+		inputLevelSelector
+		outputLevelSelector.addEventListener("change", changeSpeakerLevel);
+
+		callButton.disabled = true;
+		callButton.onclick = call;
+
+		navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+		navigator.getUserMedia(
+			{
+				audio: true,
+				video: true,
+			},
+			gotStream, //note that we are adding both audio and video
+			function (error) {
+				console.log(error);
+			}
+		);
+
+		var RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+		var SessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription;
+		var pc = new RTCPeerConnection({
+			iceServers: [],
+		});
+
+
+		function gotStream(stream) {
+			localVideo.srcObject = stream;
+			localStream = stream;
+			callButton.disabled = false;
+			pc.addStream(stream);
+		}
+
+		pc.onicecandidate = function (event) {
+			console.log(event);
+			if (!event || !event.candidate) {
+				return;
+			} else {
+				socket.emit("video call", {
+					type: "iceCandidate",
+					candidate: event.candidate,
+				});
+			}
+		};
+
+		pc.onicecandidate = function (event) {
+			console.log(event);
+			if (!event || !event.candidate) {
+				return;
+			} else {
+				socket.emit("video call", {
+					type: "iceCandidate",
+					candidate: event.candidate,
+				});
+			}
+		};
+
+		var remoteStream;
+		pc.onaddstream = function (event) {
+			remoteStream = event.stream;
+			var remoteVideo = document.getElementById("remoteVideo");
+			remoteVideo.srcObject = event.stream;
+			remoteVideo.play();
+			callButton.disabled = true;
+			soundPeakMeter();
+		};
+
+		socket.on("video call", function (data) {
+			console.log(data);
+			switch (data.type) {
+				case "iceCandidate":
+					console.log("case : iceCandidate");
+					pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+					break;
+
+				case "offer":
+					console.log("case : offer");
+					pc.setRemoteDescription(new SessionDescription(data.description)).then(() => {
+						console.log("failure callback");
+					}); // UPDATE FOR FIREFOX
+					pc.createAnswer(
+						function (description) {
+							pc.setLocalDescription(new SessionDescription(description));
+							socket.emit("video call", {
+								type: "answer",
+								description: description,
+							});
+						},
+						function () {
+							console.log("failure callback");
+						}
+					);
+					break;
+
+				case "answer":
+					console.log("case : answer");
+					pc.setRemoteDescription(new SessionDescription(data.description)).then(function () {
+						// UPDATE FOR FIREFOX
+						console.log("failure callback");
+					});
+					break;
+			}
+		});
+
+		function call() {
+			console.log("Calling another peer");
+			console.log(pc.iceConnectionState);
+			console.log(pc);
+			if (pc.iceConnectionState == "closed") {
+				pc = new RTCPeerConnection({
+					iceServers: [],
+				});
+				pc.addStream(localStream);
+				console.log(pc);
+			}
+
+			pc.createOffer(
+				function (description) {
+					console.log("Creating offer for the other peer");
+					pc.setLocalDescription(new SessionDescription(description)).then(function () {
+						// UPDATE FOR FIREFOX
+						console.log("failure callback");
+					});
+					socket.emit("video call", {
+						type: "offer",
+						description: description,
+					});
+				},
+				function () {
+					console.log("failure callback");
+				}
+			);
+		}
+
+		/************************ datachannel ************************/
+		var dataChannelOptions = {
+			ordered: false, // do not guarantee order
+			maxRetransmitTime: 3000, // in milliseconds
+		};
+
+		// Establish your peer connection using your signaling channel here
+		var dataChannel = pc.createDataChannel("test_datachannel", dataChannelOptions);
+
+		pc.ondatachannel = function (ev) {
+			console.log("Data channel is created!");
+			(ev.channel.onopen = function () {
+				console.log("Data channel is open and ready to be used.");
+				dataChannel.send("Hello World!");
+			}),
+				(ev.channel.onerror = function (error) {
+					console.log("Data Channel Error:", error);
+				}),
+				(ev.channel.onmessage = function (event) {
+					console.log("Got Data Channel Message:", event.data);
+				}),
+				(ev.channel.onclose = function () {
+					console.log("The Data Channel is Closed");
+				});
+		};
+
+		/*********************** Sound Level ***************************/
+		function changeSpeakerLevel(e) {
+			var value = e.target.value;
+			var output = document.getElementById("speaker-value");
+			output.innerHTML = value;
+			console.log("Output value: ", value);
+			if (value && value >= 0 && value <= 1) {
+				remoteVideo.volume = value;
+			}
+		}
+		
+		
+		/*********************** Microphone Gain ***************************/
+		var gainNode;
+		if (!navigator.getUserMedia) {
+			navigator.getUserMedia = navigator.webkitGetUserMedia ||
+				navigator.mozGetUserMedia;
+		}
+		navigator.getUserMedia({
+			video: true,
+			audio: true
+		}, function(stream) {
+		  // Gets the videoTracks from the stream.
+		  const videoTracks = stream.getVideoTracks();
+
+		  /**
+		   * Creates a new audio context and build a stream source,
+		   * stream destination and a gain node. Passes the stream into 
+		   * the mediaStreamSource so we can use it in the Web Audio API.
+		   */
+		  const context = new AudioContext();
+		  const mediaStreamSource = context.createMediaStreamSource(stream);
+		  const mediaStreamDestination = context.createMediaStreamDestination();
+		  gainNode = context.createGain();
+
+		  /**
+		   * Connects the stream to the gainNode so that all audio
+		   * passes through the gain and can be controlled by it.
+		   * Then pass the stream from the gain to the mediaStreamDestination
+		   * which can pass it back to the RTC client.
+		   */
+		  mediaStreamSource.connect(gainNode);
+		  gainNode.connect(mediaStreamDestination);
+
+		  /**
+		   * Changes the gain levels on the input selector.
+		   */
+		  inputLevelSelector.addEventListener('input', event => {
+			gainNode.gain.value = event.target.value;
+			var output = document.getElementById("mic-value");
+			output.innerHTML = event.target.value;
+			console.log("Input Gain: ", event.target.value);
+		  });
+
+		  /**
+		   * The mediaStreamDestination.stream outputs a MediaStream object
+		   * containing a single AudioMediaStreamTrack. Add the video track
+		   * to the new stream to rejoin the video with the controlled audio.
+		   */
+		  const controlledStream = mediaStreamDestination.stream;
+		  for (const videoTrack of videoTracks) {
+			controlledStream.addTrack(videoTrack);
+		  }
+
+		  /**
+		   * Useσσ the stream that went through the gainNode. This
+		   * is the same stream but with altered input volume levels.
+		   */
+		  localVideo.srcObject = controlledStream;
+		  localStream = controlledStream;
+		  pc.addStream(controlledStream);
+		  
+		  
+			  micPeakMeter(context,controlledStream);	  
+		}, function(e) {
+			alert(e); // TODO: Handle error.
+		});
+
+		/*********************** Microphone Level  ***************************/
+			function micPeakMeter (context, controlledStream){
+				var x1 = webAudioPeakMeter();
+				var myMeterElement = document.getElementById('mic-peak-meter');
+				var sourceNode = context.createMediaStreamSource(controlledStream);
+				var meterNode = x1.createMeterNode(sourceNode, context);
+				x1.createMeter(myMeterElement, meterNode, {}); 
+			}
+			
+		/*********************** Sound Level  ***************************/
+		function soundPeakMeter(){
+			 soundPeakMeter = function(){
+					var x2 = webAudioPeakMeter();
+					var myMeterElement2 = document.getElementById('sound-peak-meter');
+					var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+					var sourceNode2 = audioCtx.createMediaStreamSource(remoteStream);
+					var meterNode2 = x2.createMeterNode(sourceNode2, audioCtx);
+					x2.createMeter(myMeterElement2, meterNode2, {});
+			 }; // kill it as soon as it called second time
+		};
+			
+		/*********************** Footer Button  Actions  ***************************/
+		$("#hideShowChat").click(function () {hideChat(); return false;});
+		$("#infoButton").click(function () {showInfo();	return false;});
+
+		function hideChat() {
+			console.log("dadsa");
+			var x = document.getElementById("chat");
+			if (x.style.display === "none") {
+				x.style.display = "block";
+			} else {
+				x.style.display = "none";
+			}
+		}
+
+		function muteSound(href) {
+			var x = $("#muteSoundButton");
+			console.log(remoteVideo.volume);
+			if (remoteVideo.volume == 0) {
+				remoteVideo.volume = document.getElementById("volume").value;
+			} else remoteVideo.volume = 0;
+			$(href).find("i").toggleClass("fa-volume-up fa-volume-off");
+		}
+
+		function muteMic(href) {
+			var x = $("#muteMicButton");
+			console.log(gainNode.gain.value);
+			if (gainNode.gain.value == 0) {
+				gainNode.gain.value = 1;
+			} else gainNode.gain.value = 0;
+			$(href).find("i").toggleClass("fa-microphone-slash fa-microphone");
+		}
+
+		function showInfo() {
+			alert("Made by TP 4208 - Tzanokostakis Antonios\nProject of 2020 - Multimedia Application Development @HMU");
+		}
+		
+		
+		/*********************** The code for meters ***************************/
+		function webAudioPeakMeter() {
+		  'use strict';
+		  var options = {
+			borderSize: 2,
+			fontSize: 9,
+			backgroundColor: 'black',
+			tickColor: '#ddd',
+			labelColor: '#ddd',
+			gradient: ['red 1%', '#ff0 16%', 'lime 45%', '#080 100%'],
+			dbRange: 48,
+			dbTickSize: 6,
+			maskTransition: '0.1s',
+		  };
+		  var tickWidth;
+		  var elementWidth;
+		  var elementHeight;
+		  var meterHeight;
+		  var meterWidth;
+		  var meterTop;
+		  var vertical = true;
+		  var channelCount = 1;
+		  var channelMasks = [];
+		  var channelPeaks = [];
+		  var channelPeakLabels = [];
+		  var maskSizes = [];
+		  var textLabels = [];
+
+		  var getBaseLog = function(x, y) {
+			return Math.log(y) / Math.log(x);
+		  };
+
+		  var dbFromFloat = function(floatVal) {
+			return getBaseLog(10, floatVal) * 20;
+		  };
+
+		  var setOptions = function(userOptions) {
+			for (var k in userOptions) {
+			  if(userOptions.hasOwnProperty(k)) {
+				options[k] = userOptions[k];
+			  }
+			}
+			tickWidth = options.fontSize * 2.0;
+			meterTop = options.fontSize * 1.5 + options.borderSize;
+		  };
+
+		  var createMeterNode = function(sourceNode, audioCtx) {
+			var c = sourceNode.channelCount;
+			var meterNode = audioCtx.createScriptProcessor(2048, c, c);
+			sourceNode.connect(meterNode);
+			meterNode.connect(audioCtx.destination);
+			return meterNode;
+		  };
+
+		  var createContainerDiv = function(parent) {
+			var meterElement = document.createElement('div');
+			meterElement.style.position = 'relative';
+			meterElement.style.width = elementWidth + 'px';
+			meterElement.style.height = elementHeight + 'px';
+			meterElement.style.backgroundColor = options.backgroundColor;
+			parent.appendChild(meterElement);
+			return meterElement;
+		  };
+
+		  var createMeter = function(domElement, meterNode, optionsOverrides) {
+			setOptions(optionsOverrides);
+			elementWidth = domElement.clientWidth;
+			elementHeight = domElement.clientHeight;
+			var meterElement = createContainerDiv(domElement);
+			if (elementWidth > elementHeight) {
+			  vertical = false;
+			}
+			meterHeight = elementHeight - meterTop - options.borderSize;
+			meterWidth = elementWidth - tickWidth - options.borderSize;
+			createTicks(meterElement);
+			createRainbow(meterElement, meterWidth, meterHeight,
+						  meterTop, tickWidth);
+			channelCount = meterNode.channelCount;
+			var channelWidth = meterWidth / channelCount;
+			if (!vertical) {
+			  channelWidth = meterHeight / channelCount;
+			}
+			var channelLeft = tickWidth;
+			if (!vertical) {
+			  channelLeft = meterTop;
+			}
+			for (var i = 0; i < channelCount; i++) {
+			  createChannelMask(meterElement, options.borderSize,
+								meterTop, channelLeft, false);
+			  channelMasks[i] = createChannelMask(meterElement, channelWidth,
+												  meterTop, channelLeft,
+												  options.maskTransition);
+			  channelPeaks[i] = 0.0;
+			  channelPeakLabels[i] = createPeakLabel(meterElement, channelWidth,
+													 channelLeft);
+			  channelLeft += channelWidth;
+			  maskSizes[i] = 0;
+			  textLabels[i] = '-∞';
+			}
+			meterNode.onaudioprocess = updateMeter;
+			meterElement.addEventListener('click', function() {
+			  for (var i = 0; i < channelCount; i++) {
+				channelPeaks[i] = 0.0;
+				textLabels[i] = '-∞';
+			  }
+			}, false);
+			paintMeter();
+		  };
+
+		  var createTicks = function(parent) {
+			var numTicks = Math.floor(options.dbRange / options.dbTickSize);
+			var dbTickLabel = 0;
+			if (vertical) {
+			  var dbTickTop = options.fontSize + options.borderSize;
+			  for (var i = 0; i < numTicks; i++) {
+				var dbTick = document.createElement('div');
+				parent.appendChild(dbTick);
+				dbTick.style.width = tickWidth + 'px';
+				dbTick.style.textAlign = 'right';
+				dbTick.style.color = options.tickColor;
+				dbTick.style.fontSize = options.fontSize + 'px';
+				dbTick.style.position = 'absolute';
+				dbTick.style.top = dbTickTop + 'px';
+				dbTick.textContent = dbTickLabel + '';
+				dbTickLabel -= options.dbTickSize;
+				dbTickTop += meterHeight / numTicks;
+			  }
+			} else {
+			  tickWidth = meterWidth / numTicks;
+			  var dbTickRight = options.fontSize * 2;
+			  for (var i = 0; i < numTicks; i++) {
+				var dbTick = document.createElement('div');
+				parent.appendChild(dbTick);
+				dbTick.style.width = tickWidth + 'px';
+				dbTick.style.textAlign = 'right';
+				dbTick.style.color = options.tickColor;
+				dbTick.style.fontSize = options.fontSize + 'px';
+				dbTick.style.position = 'absolute';
+				dbTick.style.right = dbTickRight + 'px';
+				dbTick.textContent = dbTickLabel + '';
+				dbTickLabel -= options.dbTickSize;
+				dbTickRight += tickWidth;
+			  }
+			}
+		  };
+
+		  var createRainbow = function(parent, width, height, top, left) {
+			var rainbow = document.createElement('div');
+			parent.appendChild(rainbow);
+			rainbow.style.width = width + 'px';
+			rainbow.style.height = height + 'px';
+			rainbow.style.position = 'absolute';
+			rainbow.style.top = top + 'px';
+			if (vertical) {
+			  rainbow.style.left = left + 'px';
+			  var gradientStyle = 'linear-gradient(to bottom, ' +
+				options.gradient.join(', ') + ')';
+			} else {
+			  rainbow.style.left = options.borderSize + 'px';
+			  var gradientStyle = 'linear-gradient(to left, ' +
+				options.gradient.join(', ') + ')';
+			}
+			rainbow.style.backgroundImage = gradientStyle;
+			return rainbow;
+		  };
+
+		  var createPeakLabel = function(parent, width, left) {
+			var label = document.createElement('div');
+			parent.appendChild(label);
+			label.style.textAlign = 'center';
+			label.style.color = options.labelColor;
+			label.style.fontSize = options.fontSize + 'px';
+			label.style.position = 'absolute';
+			label.textContent = '-∞';
+			if (vertical) {
+			  label.style.width = width + 'px';
+			  label.style.top = options.borderSize + 'px';
+			  label.style.left = left + 'px';
+			} else {
+			  label.style.width = options.fontSize * 2 + 'px';
+			  label.style.right = options.borderSize + 'px';
+			  label.style.top = (width * 0.25) + left + 'px';
+			}
+			return label;
+		  };
+
+		  var createChannelMask = function(parent, width, top, left, transition) {
+			var channelMask = document.createElement('div');
+			parent.appendChild(channelMask);
+			channelMask.style.position = 'absolute';
+			if (vertical) {
+			  channelMask.style.width = width + 'px';
+			  channelMask.style.height = meterHeight + 'px';
+			  channelMask.style.top = top + 'px';
+			  channelMask.style.left = left + 'px';
+			} else {
+			  channelMask.style.width = meterWidth + 'px';
+			  channelMask.style.height = width + 'px';
+			  channelMask.style.top = left + 'px';
+			  channelMask.style.right = options.fontSize * 2 + 'px';
+			}
+			channelMask.style.backgroundColor = options.backgroundColor;
+			if (transition) {
+			  if (vertical) {
+				channelMask.style.transition = 'height ' + options.maskTransition;
+			  } else {
+				channelMask.style.transition = 'width ' + options.maskTransition;
+			  }
+			}
+			return channelMask;
+		  };
+
+		  var maskSize = function(floatVal) {
+			var meterDimension = vertical ? meterHeight : meterWidth;
+			if (floatVal === 0.0) {
+			  return meterDimension;
+			} else {
+			  var d = options.dbRange * -1;
+			  var returnVal = Math.floor(dbFromFloat(floatVal) * meterDimension / d);
+			  if (returnVal > meterDimension) {
+				return meterDimension;
+			  } else {
+				return returnVal;
+			  }
+			}
+		  };
+
+		  var updateMeter = function(audioProcessingEvent) {
+			var inputBuffer = audioProcessingEvent.inputBuffer;
+			var i;
+			var channelData = [];
+			var channelMaxes = [];
+			for (i = 0; i < channelCount; i++) {
+			  channelData[i] = inputBuffer.getChannelData(i);
+			  channelMaxes[i] = 0.0;
+			}
+			for (var sample = 0; sample < inputBuffer.length; sample++) {
+			  for (i = 0; i < channelCount; i++) {
+				if (Math.abs(channelData[i][sample]) > channelMaxes[i]) {
+				  channelMaxes[i] = Math.abs(channelData[i][sample]);
+				}
+			  }
+			}
+			for (i = 0; i < channelCount; i++) {
+			  maskSizes[i] = maskSize(channelMaxes[i], meterHeight);
+			  if (channelMaxes[i] > channelPeaks[i]) {
+				channelPeaks[i] = channelMaxes[i];
+				textLabels[i] = dbFromFloat(channelPeaks[i]).toFixed(1);
+			  }
+			}
+		  };
+
+		  var paintMeter = function() {
+			for (var i = 0; i < channelCount; i++) {
+			  if (vertical) {
+				channelMasks[i].style.height = maskSizes[i] + 'px';
+			  } else {
+				channelMasks[i].style.width = maskSizes[i] + 'px';
+			  }
+			  channelPeakLabels[i].textContent = textLabels[i];
+			}
+			window.requestAnimationFrame(paintMeter);
+		  };
+
+		  return {
+			createMeterNode: createMeterNode,
+			createMeter: createMeter,
+		  };
+		};
+	</script>
+</body>
+</html>
