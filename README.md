@@ -25,7 +25,7 @@ To run the app follow the following steps:
 1. Open one more tab and go to http://localhost:8080/
 1. After you have two tabs opened, just click the call button
 
-## Screenshots
+## Screenshot
 ![image](capture.jpg)
 
 ![visitors](https://visitor-badge.glitch.me/badge?page_id=u1trab.nodejs&left_color=green&right_color=red)
