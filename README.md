@@ -1,8 +1,8 @@
-<h3 align="center">Read Time Chat with input / output gains (aka microphone and sound volume) and webAudioPeakMeter.</h3>
+<h3 align="center">Read Time Chat with input / output gains (aka microphone and sound volume), Web Audio Meters and more.</h3>
 
 
 ## Languages and Tools
-<img src="https://github.com/devicons/devicon/blob/master/icons/nodejs/nodejs-original-wordmark.svg" alt="nodejs" width="40" height="40"/> </a> 
+<img src="https://github.com/devicons/devicon/blob/master/icons/nodejs/nodejs-plain-wordmark.svg" alt="nodejs" width="40" height="40"/> </a> 
 <img src="https://github.com/devicons/devicon/blob/master/icons/html5/html5-original-wordmark.svg" alt="html" width="40" height="40"/> </a> 
 <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/javascript/javascript-original.svg" alt="javascript" width="40" height="40"/> </a> 
 <br>
