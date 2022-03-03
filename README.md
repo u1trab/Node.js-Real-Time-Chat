@@ -28,4 +28,4 @@ To run the app follow the following steps:
 ## Screenshot
 ![image](capture.jpg)
 
-![visitors](https://visitor-badge.glitch.me/badge?page_id=u1trab.nodejs&left_color=green&right_color=red)
+![visitors](https://visitor-badge.glitch.me/badge?page_id=u1trab/node.js-real-time-chat&left_color=green&right_color=red)
